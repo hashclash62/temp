@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/meow/termcall/internal/playback"
 	"github.com/meow/termcall/internal/protocol"
 	"github.com/pion/webrtc/v4"
 )
@@ -167,11 +168,21 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 	pc.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		log.Printf("Received %s track from %s", track.Kind().String(), peerID)
 		if track.Kind() == webrtc.RTPCodecTypeAudio {
+			player, err := playback.NewPlayer()
+			if err != nil {
+				log.Printf("Failed to create audio player for %s: %v", peerID, err)
+				return
+			}
+
 			go func() {
-				buf := make([]byte, 1500)
+				defer player.Close()
 				for {
-					if _, _, err := track.Read(buf); err != nil {
+					packet, _, err := track.ReadRTP()
+					if err != nil {
 						return
+					}
+					if err := player.WriteOpus(packet.Payload); err != nil {
+						// Silence decode errors, as packet loss can corrupt frames
 					}
 				}
 			}()
