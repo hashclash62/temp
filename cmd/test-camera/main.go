@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/meow/termcall/internal/ascii"
 	"github.com/meow/termcall/internal/capture"
 )
 
@@ -15,11 +16,13 @@ func main() {
 	defer cancel()
 
 	fmt.Println("Starting camera...")
-	frameChan, err := cam.Start(ctx, 80, 24)
+	frameChan, err := cam.Start(ctx)
 	if err != nil {
 		fmt.Printf("Error starting camera: %v\n", err)
 		return
 	}
+
+	renderer := ascii.NewDefaultRenderer(ascii.Config{})
 
 	framesReceived := 0
 	for {
@@ -32,7 +35,8 @@ func main() {
 			framesReceived++
 			if framesReceived == 1 {
 				fmt.Println("--- FIRST FRAME PREVIEW ---")
-				fmt.Println(string(frame))
+				asciiFrame := renderer.Convert(frame, 80, 24)
+				fmt.Println(asciiFrame)
 				fmt.Println("---------------------------")
 			}
 		case <-ctx.Done():

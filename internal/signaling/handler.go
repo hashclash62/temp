@@ -14,11 +14,16 @@ import (
 
 type Server struct {
 	roomManager *RoomManager
+	turnURLs    []string
+	turnUser    string
+	turnSecret  string
 }
 
-func NewServer() *Server {
+func NewServer(turnURLs []string, turnSecret string) *Server {
 	return &Server{
 		roomManager: NewRoomManager(),
+		turnURLs:    turnURLs,
+		turnSecret:  turnSecret,
 	}
 }
 
@@ -90,9 +95,9 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			peer.Send <- protocol.SignalingMessage{
 				Type: protocol.MsgTURNCredentials,
 				Payload: toJSON(protocol.TURNCredentials{
-					URLs:       []string{"stun:stun.l.google.com:19302"}, // Temporary fallback
-					Username:   "",
-					Credential: "",
+					URLs:       s.turnURLs,
+					Username:   peer.ID,
+					Credential: s.turnSecret,
 				}),
 			}
 

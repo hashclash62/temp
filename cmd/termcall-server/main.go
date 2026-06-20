@@ -29,12 +29,13 @@ func main() {
 			return turnPkg.GenerateAuthKey(username, realm, "termcall"), true
 		},
 	})
-	if err != nil {
-		log.Printf("Failed to start TURN server: %v", err)
-		// We can still continue with just STUN/Signaling
+	turnSecret := "termcall"
+	turnURLs := []string{
+		fmt.Sprintf("stun:%s:%d", *turnIP, *turnPort),
+		fmt.Sprintf("turn:%s:%d", *turnIP, *turnPort),
 	}
 
-	sigServer := signaling.NewServer()
+	sigServer := signaling.NewServer(turnURLs, turnSecret)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", sigServer.HandleWebSocket)

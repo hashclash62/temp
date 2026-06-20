@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"image"
+
 	"github.com/pion/mediadevices"
 	_ "github.com/pion/mediadevices/pkg/driver/camera" // Register camera adapter
 	"github.com/pion/mediadevices/pkg/prop"
@@ -11,7 +13,7 @@ import (
 
 // FrameSource is an interface for something that produces frames
 type FrameSource interface {
-	Start(ctx context.Context, width, height int) (<-chan []byte, error)
+	Start(ctx context.Context, width, height int) (<-chan image.Image, error)
 }
 
 type Camera struct {
@@ -23,7 +25,7 @@ func NewCamera(fps int) *Camera {
 }
 
 // Start begins producing frames
-func (c *Camera) Start(ctx context.Context, width, height int) (<-chan []byte, error) {
+func (c *Camera) Start(ctx context.Context) (<-chan image.Image, error) {
 	stream, err := mediadevices.GetUserMedia(mediadevices.MediaStreamConstraints{
 		Video: func(mtc *mediadevices.MediaTrackConstraints) {
 			mtc.FrameRate = prop.Float(c.frameRate)
@@ -43,7 +45,7 @@ func (c *Camera) Start(ctx context.Context, width, height int) (<-chan []byte, e
 	track := tracks[0]
 	videoReader := track.(*mediadevices.VideoTrack).NewReader(false)
 
-	frameChan := make(chan []byte)
+	frameChan := make(chan image.Image)
 
 	go func() {
 		defer close(frameChan)
@@ -60,10 +62,8 @@ func (c *Camera) Start(ctx context.Context, width, height int) (<-chan []byte, e
 					return
 				}
 
-				ascii := imageToASCII(img, width, height)
-
 				select {
-				case frameChan <- []byte(ascii):
+				case frameChan <- img:
 				case <-ctx.Done():
 					return
 				}
