@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
+	"os"
 	"sync/atomic"
 
-	// "os"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/meow/termcall/internal/capture"
 	"github.com/meow/termcall/internal/rtc"
@@ -47,7 +48,8 @@ func main() {
 
 		sigClient, err := signaling.NewClient(ctx, *serverURL, res.RoomID, res.Username)
 		if err != nil {
-			log.Fatalf("Failed to connect: %v", err)
+			fmt.Fprintf(os.Stderr, "\n[FATAL] Failed to connect to signaling server: %v\n", err)
+			os.Exit(1)
 		}
 		// Notice: we can't easily defer sigClient.Close() here because we are in a closure.
 		// Instead, we let the context cancellation handle it when main exits.
@@ -61,7 +63,8 @@ func main() {
 		cam := capture.NewCamera(15)
 		camChan, err := cam.Start(ctx)
 		if err != nil {
-			log.Fatalf("Failed to start camera: %v", err)
+			fmt.Fprintf(os.Stderr, "\n[FATAL] Failed to start camera: %v\nCheck if your camera is connected and if Windows Privacy Settings allow camera access.\n", err)
+			os.Exit(1)
 		}
 
 		mic := capture.NewMicrophone()
@@ -119,7 +122,8 @@ func main() {
 	p.Store(prog)
 
 	if _, err := prog.Run(); err != nil {
-		log.Fatalf("Error running program: %v", err)
+		fmt.Fprintf(os.Stderr, "Error running program: %v\n", err)
+		os.Exit(1)
 	}
 
 	log.Println("Shutting down...")
