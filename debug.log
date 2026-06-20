@@ -1,0 +1,65 @@
+debug 2026/06/20 14:55:23 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 14:55:26 Joined room test as 8388bc57
+debug 2026/06/20 14:55:51 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 14:55:52 Joined room test as 04fedb92
+debug 2026/06/20 14:55:52 Peer 8388bc57 state changed: connecting
+debug 2026/06/20 14:55:52 Peer 04fedb92 state changed: connecting
+debug 2026/06/20 14:55:52 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 14:55:52 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 14:56:05 Shutting down...
+debug 2026/06/20 14:56:16 Shutting down...
+debug 2026/06/20 14:56:16 Disconnected from signaling server: failed to read JSON message: failed to get reader: received close frame: status = StatusNormalClosure and reason = ""
+debug 2026/06/20 14:57:29 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 14:57:30 Joined room test as 14f4fdd3
+debug 2026/06/20 14:57:36 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 14:57:36 Joined room test as 94ec7426
+debug 2026/06/20 14:57:36 Peer 14f4fdd3 state changed: connecting
+debug 2026/06/20 14:57:36 Peer 94ec7426 state changed: connecting
+debug 2026/06/20 14:57:36 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 14:57:36 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 14:58:06 Peer 94ec7426 state changed: failed
+debug 2026/06/20 14:58:06 Peer 14f4fdd3 state changed: failed
+debug 2026/06/20 14:58:25 Shutting down...
+debug 2026/06/20 14:58:25 Disconnected from signaling server: failed to read JSON message: failed to get reader: received close frame: status = StatusNormalClosure and reason = ""
+debug 2026/06/20 14:58:26 Shutting down...
+debug 2026/06/20 14:58:28 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 14:58:29 Joined room test as 5ba5262f
+debug 2026/06/20 14:58:32 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 14:58:32 Joined room test as bea36379
+debug 2026/06/20 14:58:32 Peer 5ba5262f state changed: connecting
+debug 2026/06/20 14:58:32 Peer bea36379 state changed: connecting
+debug 2026/06/20 14:58:32 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 14:58:32 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 14:59:02 Peer bea36379 state changed: failed
+debug 2026/06/20 14:59:02 Peer 5ba5262f state changed: failed
+debug 2026/06/20 14:59:04 Shutting down...
+debug 2026/06/20 14:59:05 Shutting down...
+debug 2026/06/20 15:01:24 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 15:01:25 Joined room test as 7b02b182
+debug 2026/06/20 15:02:29 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 15:02:29 Joined room test as 1591e377
+debug 2026/06/20 15:02:29 Peer 1591e377 state changed: connecting
+debug 2026/06/20 15:02:29 Peer 7b02b182 state changed: connecting
+debug 2026/06/20 15:02:29 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 15:02:29 Failed to set remote desc: InvalidModificationError: invalid proposed signaling state transition: stable->SetRemote(answer)->stable
+debug 2026/06/20 15:02:59 Peer 7b02b182 state changed: failed
+debug 2026/06/20 15:02:59 Peer 1591e377 state changed: failed
+debug 2026/06/20 15:03:12 Shutting down...
+debug 2026/06/20 15:03:12 Disconnected from signaling server: failed to read JSON message: failed to get reader: received close frame: status = StatusNormalClosure and reason = ""
+debug 2026/06/20 15:03:13 Shutting down...
+debug 2026/06/20 15:08:36 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 15:08:37 Joined room test as 7b1acf8f
+debug 2026/06/20 15:08:42 Connecting to ws://localhost:8080/ws, Room: test
+debug 2026/06/20 15:08:42 Joined room test as 563c9c46
+debug 2026/06/20 15:08:42 Peer 563c9c46 state changed: connecting
+debug 2026/06/20 15:08:42 Peer 7b1acf8f state changed: connecting
+debug 2026/06/20 15:08:42 Peer 7b1acf8f state changed: connected
+debug 2026/06/20 15:08:42 Peer 563c9c46 state changed: connected
+debug 2026/06/20 15:08:42 Received audio track from 563c9c46
+debug 2026/06/20 15:08:42 Received audio track from 7b1acf8f
+debug 2026/06/20 15:09:00 Shutting down...
+debug 2026/06/20 15:09:00 Peer 7b1acf8f state changed: closed
+debug 2026/06/20 15:09:00 Disconnected from signaling server: failed to read JSON message: failed to get reader: received close frame: status = StatusNormalClosure and reason = ""
+debug 2026/06/20 15:09:00 Peer 563c9c46 state changed: closed
+debug 2026/06/20 15:09:05 Shutting down...
+debug 2026/06/20 15:09:05 Disconnected from signaling server: failed to read JSON message: failed to get reader: received close frame: status = StatusNormalClosure and reason = ""
