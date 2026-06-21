@@ -66,3 +66,34 @@ debug 2026/06/20 15:09:05 Disconnected from signaling server: failed to read JSO
 debug 2026/06/21 20:49:23 Connecting to ws://13.127.137.230:8080/ws, Room: test
 debug 2026/06/21 20:49:24 Joined room test as b3b07a42
 debug 2026/06/21 20:49:25 Shutting down...
+debug 2026/06/21 21:39:37 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 21:39:38 Joined room test as 1057dea5
+debug 2026/06/21 21:39:41 Peer e587fd20 state changed: connecting
+debug 2026/06/21 21:39:52 Shutting down...
+debug 2026/06/21 21:40:45 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 21:40:46 Joined room test as 8759e994
+debug 2026/06/21 21:40:52 Peer c4792300 state changed: connecting
+debug 2026/06/21 21:41:01 Shutting down...
+debug 2026/06/21 21:48:18 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 21:48:19 Joined room test as fcd33ea8
+debug 2026/06/21 21:48:23 Peer c1242d09 state changed: connecting
+debug 2026/06/21 21:48:48 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 21:48:48 Joined room test as fd8a22ab
+debug 2026/06/21 21:48:48 Peer fcd33ea8 state changed: connecting
+debug 2026/06/21 21:48:49 Peer fd8a22ab state changed: connecting
+debug 2026/06/21 21:48:49 Peer c1242d09 state changed: connecting
+debug 2026/06/21 21:48:53 Peer c1242d09 state changed: failed
+debug 2026/06/21 21:48:55 Shutting down...
+debug 2026/06/21 21:48:58 Shutting down...
+debug 2026/06/21 21:49:05 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 21:49:06 Joined room test as 1df6e68a
+debug 2026/06/21 21:49:08 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 21:49:08 Joined room test as 8075b972
+debug 2026/06/21 21:49:08 Peer 1df6e68a state changed: connecting
+debug 2026/06/21 21:49:08 Peer 8075b972 state changed: connecting
+debug 2026/06/21 21:49:38 Peer 1df6e68a state changed: failed
+debug 2026/06/21 21:49:38 Peer 8075b972 state changed: failed
+debug 2026/06/21 21:49:57 Disconnected from signaling server: failed to read JSON message: failed to get reader: failed to read frame header: EOF
+debug 2026/06/21 21:49:57 Disconnected from signaling server: failed to read JSON message: failed to get reader: failed to read frame header: EOF
+debug 2026/06/21 21:49:59 Shutting down...
+debug 2026/06/21 21:50:46 Shutting down...

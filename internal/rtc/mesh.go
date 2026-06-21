@@ -150,8 +150,7 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 	m.mu.RUnlock()
 
 	config := webrtc.Configuration{
-		ICEServers:         iceServers,
-		ICETransportPolicy: webrtc.ICETransportPolicyRelay,
+		ICEServers: iceServers,
 	}
 
 	pc, err := m.webrtcAPI.NewPeerConnection(config)

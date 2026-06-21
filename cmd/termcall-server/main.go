@@ -33,6 +33,7 @@ func main() {
 	turnURLs := []string{
 		fmt.Sprintf("stun:%s:%d", *turnIP, *turnPort),
 		fmt.Sprintf("turn:%s:%d", *turnIP, *turnPort),
+		fmt.Sprintf("turn:%s:%d?transport=tcp", *turnIP, *turnPort),
 	}
 
 	sigServer := signaling.NewServer(turnURLs, turnSecret)

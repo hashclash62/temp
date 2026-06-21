@@ -28,6 +28,11 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to create TURN UDP listener: %w", err)
 	}
 
+	tcpListener, err := net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%d", cfg.Port))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TURN TCP listener: %w", err)
+	}
+
 	log.Printf("Starting STUN/TURN server on UDP %d (Public IP: %s)", cfg.Port, cfg.PublicIP)
 
 	s, err := turn.NewServer(turn.ServerConfig{
@@ -37,6 +42,17 @@ func NewServer(cfg Config) (*Server, error) {
 		PacketConnConfigs: []turn.PacketConnConfig{
 			{
 				PacketConn: udpListener,
+				RelayAddressGenerator: &turn.RelayAddressGeneratorPortRange{
+					RelayAddress: net.ParseIP(cfg.PublicIP),
+					Address:      "0.0.0.0",
+					MinPort:      50000,
+					MaxPort:      50050,
+				},
+			},
+		},
+		ListenerConfigs: []turn.ListenerConfig{
+			{
+				Listener: tcpListener,
 				RelayAddressGenerator: &turn.RelayAddressGeneratorPortRange{
 					RelayAddress: net.ParseIP(cfg.PublicIP),
 					Address:      "0.0.0.0",
