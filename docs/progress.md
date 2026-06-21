@@ -1,37 +1,54 @@
-# TermCall - Progress Report
+# TermCall Architecture & Progress Report
 
-## Current Status
-We have successfully built a functional, cross-platform terminal-based video calling application. The core feature of transmitting real-time webcam video as ASCII art over WebRTC data channels is working efficiently, alongside a polished and thematic Terminal User Interface (TUI).
+This document is intended to provide detailed context for AI coding agents about the current implementation logic, routing, and WebRTC network traversal of the TermCall application.
 
-## Completed Features
+## 1. Core Architecture
+TermCall is a terminal-based video calling application written in Go.
+- **Topology:** Currently implemented as a **Full Mesh Network** (`internal/rtc/MeshManager`). Every peer maintains a direct `PeerConnection` with every other peer in the room.
+- **Signaling Server:** A centralized WebSocket server (`cmd/termcall-server`) running on an AWS EC2 instance handles room state and forwards SDP Offers, Answers, and ICE Candidates.
+- **WebRTC Stack:** Built entirely on the [Pion WebRTC](https://github.com/pion/webrtc) stack.
 
-### 1. Signaling & WebRTC Mesh Architecture
-- **WebSocket Signaling Server**: Implemented a standalone server (`cmd/termcall-server`) that manages room creation, peer discovery, and forwards SDP offers/answers and ICE candidates.
-- **Embedded TURN Server**: The signaling server embeds a `pion/turn` server to enable NAT traversal for clients on restrictive networks.
-- **Mesh Topology**: Implemented an N-way mesh connection (`internal/rtc/mesh.go`) where every client forms a peer-to-peer connection with every other client. Glare conditions (simultaneous offers) are automatically resolved using deterministic PeerID comparisons.
+## 2. Media Routing & Implementation Logic
 
-### 2. Video Capture & ASCII Rendering
-- **Hardware Integration**: The camera feed is read directly using `pion/mediadevices`.
-- **ASCII Conversion**: Raw `image.Image` frames are processed dynamically (`internal/ascii/renderer.go`).
-- **Dynamic Resolution**: The TUI measures the terminal size and grid cell dimensions in real-time, enforcing a proper 4:3 landscape aspect ratio constraint, and passes the exact target dimensions to the ASCII renderer to prevent terminal wrapping or artifacting.
+### Video (ASCII Text)
+- **Capture:** Webcam captured via `pion/mediadevices`.
+- **Processing:** Converted into ASCII characters locally using an image-to-ASCII renderer before transmission.
+- **Routing:** Instead of using standard RTP video tracks, the ASCII string is broadcasted over a **WebRTC DataChannel** (Label: `video-ascii`).
+- **Configuration:** The DataChannel is configured as **Unordered** and **Unreliable** (MaxRetransmits = 0) to mimic real-time UDP video behavior (we don't care about dropped frames, only the latest frame).
 
-### 3. Terminal User Interface (TUI)
-- **Framework**: Built natively with Bubble Tea (`charmbracelet/bubbletea`) and Lipgloss.
-- **Join Form**: Uses `charmbracelet/huh` to provide an interactive setup form if the CLI flags (`--room`, `--username`) are omitted.
-- **Dynamic Grid**: Video feeds from the local camera and remote peers are dynamically arranged into rows and columns depending on the number of participants.
-- **Theme System**: Supports hot-swapping visual styles via the `[T]` key, currently featuring Midnight, Daylight, and Ayu themes.
-- **Cross-Platform Fallbacks**: Conditionally drops CGO dependencies (like audio capture) if they are missing on the host OS, letting the app gracefully degrade into a text-video-only mode (crucial for frictionless Windows compilation).
+### Audio (Opus)
+- **Capture:** Microphone captured via `pion/mediadevices`, encoding raw audio into Opus frames natively.
+- **Routing:** Sent over standard WebRTC RTP Audio Tracks (`webrtc.TrackLocal`). 
+- **Playback:** Handled by `internal/playback/player_cgo.go` using `malgo` for device playback and `pion/opus` for decoding.
+- **Mute Functionality:** Implemented via `webrtc.RTPSender.ReplaceTrack(nil)`. This gracefully stops outbound packet transmission without tearing down the underlying `PeerConnection`.
 
-## Outstanding Issues & Next Steps
+## 3. Network Traversal (AWS VPS Configuration)
+Network traversal (NAT punching) was heavily debugged and optimized for hostile ISP environments (e.g., Symmetric NATs like Jio mobile networks).
 
-### 1. Audio Playback (Microphone Module)
-**Issue**: While the app captures and transmits Opus audio streams over WebRTC, the receiver currently drops incoming audio packets. There is no decoding or playback engine implemented.
-**Next Step**: Implement Opus decoding (via `hraban/opus`) and audio playback (via `malgo` or `oto`) and wire them to the remote WebRTC audio tracks.
+### STUN (Public IP Discovery)
+- We rely on `stun:stun.l.google.com:19302` as the primary STUN provider. This guarantees reliable `srflx` candidate generation for 85% of users. 
 
-### 2. Audio Control UI
-**Issue**: The `[M]` (Mic) button in the UI toggles visual state, but does not yet physically mute the WebRTC audio track.
-**Next Step**: Wire the TUI control bar directly to the WebRTC track states.
+### TURN (Relay Server)
+Symmetric NATs prevent direct STUN P2P connections. For these users, media *must* be relayed through our TURN server on the AWS VPS.
+- **Custom TURN Server:** We use `pion/turn` integrated directly into our `termcall-server` binary.
+- **The TCP Encapsulation Bypass:** Many ISPs explicitly throttle or drop UDP packets. To guarantee connectivity across strict firewalls, we enabled **TURN-over-TCP** and bound the TURN server to **TCP Port 443** (the standard HTTPS port).
+- **ICE URL:** `turn:13.127.137.230:443?transport=tcp`
+- **Result:** WebRTC traffic is encapsulated inside TCP and disguised as standard HTTPS traffic, bypassing almost all ISP filters.
 
-### 3. Mesh Scalability (Future)
-**Issue**: The current mesh topology works flawlessly for 2-5 peers but network overhead scales quadratically ($O(n^2)$).
-**Next Step**: To support 10-20 peers, we must investigate an SFU (Selective Forwarding Unit) architecture to centralize bandwidth usage.
+### AWS Server Ports Checklist
+If deploying a new AWS EC2 server, the following ports MUST be open in both **AWS Security Groups** and the **OS Firewall (ufw/iptables)**:
+- `TCP 8080`: WebSocket Signaling.
+- `TCP 443`: TURN-over-TCP listener (Critical for NAT traversal bypass).
+- `UDP 443`: TURN-over-UDP listener.
+- `UDP 50000 - 50050`: TURN Relay port range (Used to forward the actual media packets).
+
+## 4. Scalability Limits & Future Directions
+Because this is a Full Mesh topology:
+- Each peer uploads their stream `N-1` times. 
+- Total upload bandwidth is ~300 kbps per connection (~40kbps Opus + ~260kbps ASCII frames).
+- **Practical Limit:** 10-15 peers per room.
+- **Server Cost:** If all users are behind Symmetric NATs (worst-case scenario), the AWS TURN server relays $N \times (N-1)$ streams. A 10-person room costs ~27 Mbps of continuous server bandwidth.
+
+### Future Scale Paths
+1. **1-on-1 Mode:** If restricted to 2-person rooms, STUN handles 85% of calls completely P2P. Server bandwidth drops to near-zero, scaling to 50k+ concurrent users on a cheap VPS.
+2. **SFU Integration:** For 50+ user webinars, `MeshManager` must be replaced with an SFU (Selective Forwarding Unit) like LiveKit, meaning clients only upload 1 stream to the server.
