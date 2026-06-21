@@ -22,6 +22,7 @@ type MeshManager struct {
 	iceServers []webrtc.ICEServer
 
 	localAudioTrack webrtc.TrackLocal
+	isMuted         bool
 
 	// Callbacks
 	OnFrame     func(peerID string, frame string)
@@ -85,6 +86,27 @@ func (m *MeshManager) SetLocalAudioTrack(track webrtc.TrackLocal) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.localAudioTrack = track
+}
+
+// SetMuteAudio mutes or unmutes the local audio sent to all peers.
+func (m *MeshManager) SetMuteAudio(muted bool) {
+	m.mu.Lock()
+	m.isMuted = muted
+	localTrack := m.localAudioTrack
+	m.mu.Unlock()
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, p := range m.Peers {
+		if p.AudioSender != nil {
+			if muted {
+				_ = p.AudioSender.ReplaceTrack(nil)
+			} else {
+				_ = p.AudioSender.ReplaceTrack(localTrack)
+			}
+		}
+	}
 }
 
 func (m *MeshManager) BroadcastFrame(frame []byte) {
@@ -162,7 +184,7 @@ func (m *MeshManager) handleSignalingMessage(msg protocol.SignalingMessage) {
 	}
 }
 
-func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnection, error) {
+func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnection, *webrtc.RTPSender, error) {
 	m.mu.RLock()
 	iceServers := m.iceServers
 	m.mu.RUnlock()
@@ -178,16 +200,23 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 
 	pc, err := m.webrtcAPI.NewPeerConnection(config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	m.mu.RLock()
 	localTrack := m.localAudioTrack
+	muted := m.isMuted
 	m.mu.RUnlock()
 
+	var audioSender *webrtc.RTPSender
 	if localTrack != nil {
-		if _, err := pc.AddTrack(localTrack); err != nil {
+		if sender, err := pc.AddTrack(localTrack); err != nil {
 			log.Printf("Failed to add local audio track: %v", err)
+		} else {
+			audioSender = sender
+			if muted {
+				_ = audioSender.ReplaceTrack(nil)
+			}
 		}
 	}
 
@@ -257,7 +286,7 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 		}
 	})
 
-	return pc, nil
+	return pc, audioSender, nil
 }
 
 func (m *MeshManager) handlePeerJoined(msg protocol.SignalingMessage) {
@@ -271,16 +300,17 @@ func (m *MeshManager) handlePeerJoined(msg protocol.SignalingMessage) {
 		return // Already have this peer
 	}
 
-	pc, err := m.createPeerConnection(peerID)
+	pc, sender, err := m.createPeerConnection(peerID)
 	if err != nil {
-		log.Printf("Failed to create PC for %s: %v", peerID, err)
+		log.Printf("Failed to create PC for answer: %v", err)
 		return
 	}
 
 	peer := &RemotePeer{
-		PeerID:   peerID,
-		Username: msg.Username,
-		PC:       pc,
+		PeerID:      peerID,
+		Username:    msg.Username,
+		PC:          pc,
+		AudioSender: sender,
 	}
 
 	m.mu.Lock()

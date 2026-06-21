@@ -12,8 +12,9 @@ type RemotePeer struct {
 	PC         *webrtc.PeerConnection
 	DataChan   *webrtc.DataChannel // For ASCII frames
 	ControlChan *webrtc.DataChannel // For reliable control messages
-	AudioTrack *webrtc.TrackRemote // Incoming audio
-	LastFrame  string              // Latest ASCII frame for rendering
+	AudioTrack  *webrtc.TrackRemote // Incoming audio
+	AudioSender *webrtc.RTPSender   // Outgoing audio sender (for muting)
+	LastFrame   string              // Latest ASCII frame for rendering
 	mu         sync.RWMutex
 }
 

@@ -59,7 +59,7 @@ func (m *CallModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "m":
 			m.micOn = !m.micOn
-			// TODO: mute/unmute actual track
+			m.mesh.SetMuteAudio(!m.micOn)
 			return m, nil
 		}
 	case tea.WindowSizeMsg:
