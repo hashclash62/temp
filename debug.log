@@ -1,1 +1,29 @@
-debug 2026/06/21 22:06:49 Connecting to ws://13.127.137.230:8080/ws, Room: diagtest
+debug 2026/06/21 22:24:12 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 22:24:13 Joined room test as 429e3f5b
+debug 2026/06/21 22:24:13 [ICE] Received TURN credentials: URLs=[stun:13.127.137.230:3478 turn:13.127.137.230:3478 turn:13.127.137.230:3478?transport=tcp], Username=429e3f5b
+debug 2026/06/21 22:24:13 [SIGNAL] Received PeerJoined: peerID=33a7af0a, username=win
+debug 2026/06/21 22:24:13 [ICE] Creating PeerConnection for 33a7af0a with 1 ICE servers
+debug 2026/06/21 22:24:13 [ICE]   Server URLs: [stun:13.127.137.230:3478 turn:13.127.137.230:3478 turn:13.127.137.230:3478?transport=tcp]
+debug 2026/06/21 22:24:13 [SIGNAL] Glare check: localID=429e3f5b, peerID=33a7af0a, localID>peerID=true
+debug 2026/06/21 22:24:13 [SIGNAL] Waiting for offer from 33a7af0a (we are the polite side)
+debug 2026/06/21 22:24:13 [SIGNAL] Received Offer from peerID=33a7af0a
+debug 2026/06/21 22:24:13 [SIGNAL] Setting remote offer from 33a7af0a (SDP length=1368)
+debug 2026/06/21 22:24:13 [ICE] ICE connection state for 33a7af0a: checking
+debug 2026/06/21 22:24:13 Peer 33a7af0a state changed: connecting
+debug 2026/06/21 22:24:13 [ICE] ICE gathering state for 33a7af0a: gathering
+debug 2026/06/21 22:24:13 [SIGNAL] Sending answer to 33a7af0a (SDP length=1362)
+debug 2026/06/21 22:24:13 [SIGNAL] Received ICE Candidate from peerID=33a7af0a
+debug 2026/06/21 22:24:13 [ICE] Adding remote candidate from 33a7af0a: candidate:365253032 1 udp 2130706431 10.2.0.2 61146 typ host ufrag TUWOvQIyptfdgHAb
+debug 2026/06/21 22:24:13 [ICE] Successfully added candidate from 33a7af0a
+debug 2026/06/21 22:24:13 [SIGNAL] Received ICE Candidate from peerID=33a7af0a
+debug 2026/06/21 22:24:13 [ICE] Adding remote candidate from 33a7af0a: candidate:3165403166 1 udp 2130706431 192.168.137.1 61148 typ host ufrag TUWOvQIyptfdgHAb
+debug 2026/06/21 22:24:13 [ICE] Successfully added candidate from 33a7af0a
+debug 2026/06/21 22:24:13 [SIGNAL] Received ICE Candidate from peerID=33a7af0a
+debug 2026/06/21 22:24:13 [ICE] Adding remote candidate from 33a7af0a: candidate:2653261459 1 udp 2130706431 10.110.253.238 61150 typ host ufrag TUWOvQIyptfdgHAb
+debug 2026/06/21 22:24:13 [ICE] Successfully added candidate from 33a7af0a
+debug 2026/06/21 22:24:13 [ICE] Generated candidate for 33a7af0a: type=host addr=192.168.1.33:60781
+debug 2026/06/21 22:24:13 [ICE] Sending candidate to 33a7af0a via signaling
+debug 2026/06/21 22:24:43 [ICE] ICE connection state for 33a7af0a: failed
+debug 2026/06/21 22:24:43 Peer 33a7af0a state changed: failed
+debug 2026/06/21 22:25:22 [SIGNAL] Received PeerLeft: peerID=33a7af0a
+debug 2026/06/21 22:25:23 Shutting down...

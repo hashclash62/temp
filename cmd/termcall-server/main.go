@@ -31,6 +31,7 @@ func main() {
 	})
 	turnSecret := "termcall"
 	turnURLs := []string{
+		"stun:stun.l.google.com:19302",
 		fmt.Sprintf("stun:%s:%d", *turnIP, *turnPort),
 		fmt.Sprintf("turn:%s:%d", *turnIP, *turnPort),
 		fmt.Sprintf("turn:%s:%d?transport=tcp", *turnIP, *turnPort),
