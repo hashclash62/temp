@@ -68,6 +68,13 @@ func (m *MeshManager) Stop() {
 	}
 }
 
+// RLockPeers allows safe read-only access to the Peers map for diagnostics.
+func (m *MeshManager) RLockPeers(fn func(peers map[string]*RemotePeer)) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	fn(m.Peers)
+}
+
 func (m *MeshManager) SetICEServers(servers []webrtc.ICEServer) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
