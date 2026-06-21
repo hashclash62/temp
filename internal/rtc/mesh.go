@@ -8,6 +8,7 @@ import (
 
 	"github.com/meow/termcall/internal/playback"
 	"github.com/meow/termcall/internal/protocol"
+	"github.com/pion/ice/v4"
 	"github.com/pion/webrtc/v4"
 )
 
@@ -41,7 +42,9 @@ func NewMeshManager(signaler SignalTransport) *MeshManager {
 		log.Fatalf("Failed to register codecs: %v", err)
 	}
 
-	api := webrtc.NewAPI(webrtc.WithMediaEngine(m))
+	s := webrtc.SettingEngine{}
+	s.SetICEMulticastDNSMode(ice.MulticastDNSModeDisabled)
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(m), webrtc.WithSettingEngine(s))
 
 	return &MeshManager{
 		Peers:     make(map[string]*RemotePeer),
