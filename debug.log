@@ -63,3 +63,6 @@ debug 2026/06/20 15:09:00 Disconnected from signaling server: failed to read JSO
 debug 2026/06/20 15:09:00 Peer 563c9c46 state changed: closed
 debug 2026/06/20 15:09:05 Shutting down...
 debug 2026/06/20 15:09:05 Disconnected from signaling server: failed to read JSON message: failed to get reader: received close frame: status = StatusNormalClosure and reason = ""
+debug 2026/06/21 20:49:23 Connecting to ws://13.127.137.230:8080/ws, Room: test
+debug 2026/06/21 20:49:24 Joined room test as b3b07a42
+debug 2026/06/21 20:49:25 Shutting down...
