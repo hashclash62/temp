@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/pion/logging"
 	"github.com/pion/turn/v4"
 )
 
@@ -30,8 +31,9 @@ func NewServer(cfg Config) (*Server, error) {
 	log.Printf("Starting STUN/TURN server on UDP %d (Public IP: %s)", cfg.Port, cfg.PublicIP)
 
 	s, err := turn.NewServer(turn.ServerConfig{
-		Realm:       cfg.Realm,
-		AuthHandler: cfg.Auth,
+		Realm:         cfg.Realm,
+		AuthHandler:   cfg.Auth,
+		LoggerFactory: logging.NewDefaultLoggerFactory(),
 		PacketConnConfigs: []turn.PacketConnConfig{
 			{
 				PacketConn: udpListener,
