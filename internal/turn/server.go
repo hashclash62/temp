@@ -35,9 +35,11 @@ func NewServer(cfg Config) (*Server, error) {
 		PacketConnConfigs: []turn.PacketConnConfig{
 			{
 				PacketConn: udpListener,
-				RelayAddressGenerator: &turn.RelayAddressGeneratorStatic{
+				RelayAddressGenerator: &turn.RelayAddressGeneratorPortRange{
 					RelayAddress: net.ParseIP(cfg.PublicIP),
 					Address:      "0.0.0.0",
+					MinPort:      50000,
+					MaxPort:      50050,
 				},
 			},
 		},
