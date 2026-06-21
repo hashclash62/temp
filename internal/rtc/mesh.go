@@ -118,6 +118,7 @@ func (m *MeshManager) handleSignalingMessage(msg protocol.SignalingMessage) {
 	case protocol.MsgTURNCredentials:
 		var creds protocol.TURNCredentials
 		if err := json.Unmarshal(msg.Payload, &creds); err == nil {
+			log.Printf("[ICE] Received TURN credentials: URLs=%v, Username=%s", creds.URLs, creds.Username)
 			m.SetICEServers([]webrtc.ICEServer{
 				{
 					URLs:       creds.URLs,
@@ -125,22 +126,32 @@ func (m *MeshManager) handleSignalingMessage(msg protocol.SignalingMessage) {
 					Credential: creds.Credential,
 				},
 			})
+		} else {
+			log.Printf("[ICE] Failed to parse TURN credentials: %v", err)
 		}
 
 	case protocol.MsgPeerJoined:
+		log.Printf("[SIGNAL] Received PeerJoined: peerID=%s, username=%s", msg.PeerID, msg.Username)
 		m.handlePeerJoined(msg)
 
 	case protocol.MsgPeerLeft:
+		log.Printf("[SIGNAL] Received PeerLeft: peerID=%s", msg.PeerID)
 		m.handlePeerLeft(msg.PeerID)
 
 	case protocol.MsgOffer:
+		log.Printf("[SIGNAL] Received Offer from peerID=%s", msg.PeerID)
 		m.handleOffer(msg)
 
 	case protocol.MsgAnswer:
+		log.Printf("[SIGNAL] Received Answer from peerID=%s", msg.PeerID)
 		m.handleAnswer(msg)
 
 	case protocol.MsgICECandidate:
+		log.Printf("[SIGNAL] Received ICE Candidate from peerID=%s", msg.PeerID)
 		m.handleICECandidate(msg)
+
+	default:
+		log.Printf("[SIGNAL] Unknown message type: %s", msg.Type)
 	}
 }
 
@@ -148,6 +159,11 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 	m.mu.RLock()
 	iceServers := m.iceServers
 	m.mu.RUnlock()
+
+	log.Printf("[ICE] Creating PeerConnection for %s with %d ICE servers", peerID, len(iceServers))
+	for _, s := range iceServers {
+		log.Printf("[ICE]   Server URLs: %v", s.URLs)
+	}
 
 	config := webrtc.Configuration{
 		ICEServers: iceServers,
@@ -194,25 +210,37 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 
 	pc.OnICECandidate(func(c *webrtc.ICECandidate) {
 		if c == nil {
+			log.Printf("[ICE] ICE gathering complete for peer %s", peerID)
 			return
 		}
-		
-		// pion v4 changes ICECandidate struct.
-		// We'll safely marshal it.
+
+		log.Printf("[ICE] Generated candidate for %s: type=%s addr=%s:%d", peerID, c.Typ.String(), c.Address, c.Port)
+
 		candJSON := c.ToJSON()
 
 		payload, _ := json.Marshal(protocol.ICECandidatePayload{
-			Candidate:     candJSON.Candidate,
-			SDPMid:        candJSON.SDPMid,
-			SDPMLineIndex: candJSON.SDPMLineIndex,
+			Candidate:        candJSON.Candidate,
+			SDPMid:           candJSON.SDPMid,
+			SDPMLineIndex:    candJSON.SDPMLineIndex,
 			UsernameFragment: candJSON.UsernameFragment,
 		})
 
-		m.signaler.Send(protocol.SignalingMessage{
+		log.Printf("[ICE] Sending candidate to %s via signaling", peerID)
+		if err := m.signaler.Send(protocol.SignalingMessage{
 			Type:    protocol.MsgICECandidate,
 			PeerID:  peerID,
 			Payload: payload,
-		})
+		}); err != nil {
+			log.Printf("[ICE] ERROR sending candidate to %s: %v", peerID, err)
+		}
+	})
+
+	pc.OnICEConnectionStateChange(func(s webrtc.ICEConnectionState) {
+		log.Printf("[ICE] ICE connection state for %s: %s", peerID, s.String())
+	})
+
+	pc.OnICEGatheringStateChange(func(s webrtc.ICEGatheringState) {
+		log.Printf("[ICE] ICE gathering state for %s: %s", peerID, s.String())
 	})
 
 	pc.OnConnectionStateChange(func(s webrtc.PeerConnectionState) {
@@ -232,6 +260,7 @@ func (m *MeshManager) handlePeerJoined(msg protocol.SignalingMessage) {
 	_, exists := m.Peers[peerID]
 	m.mu.RUnlock()
 	if exists {
+		log.Printf("[SIGNAL] Peer %s already exists, skipping", peerID)
 		return // Already have this peer
 	}
 
@@ -256,8 +285,16 @@ func (m *MeshManager) handlePeerJoined(msg protocol.SignalingMessage) {
 	}
 
 	// Only initiate offer if LocalPeerID < peerID to avoid glare
-	if m.LocalPeerID > peerID {
+	m.mu.RLock()
+	localID := m.LocalPeerID
+	m.mu.RUnlock()
+
+	log.Printf("[SIGNAL] Glare check: localID=%s, peerID=%s, localID>peerID=%v", localID, peerID, localID > peerID)
+
+	if localID > peerID {
+		log.Printf("[SIGNAL] Waiting for offer from %s (we are the polite side)", peerID)
 		pc.OnDataChannel(func(dc *webrtc.DataChannel) {
+			log.Printf("[DATA] Received data channel '%s' from %s", dc.Label(), peerID)
 			if dc.Label() == "video-ascii" {
 				peer.DataChan = dc
 				dc.OnMessage(func(dMsg webrtc.DataChannelMessage) {
@@ -272,6 +309,8 @@ func (m *MeshManager) handlePeerJoined(msg protocol.SignalingMessage) {
 		})
 		return
 	}
+
+	log.Printf("[SIGNAL] Creating offer for %s (we are the impolite side)", peerID)
 
 	// Create unordered, unreliable datachannel for video frames
 	maxRetransmits := uint16(0)
@@ -307,16 +346,20 @@ func (m *MeshManager) handlePeerJoined(msg protocol.SignalingMessage) {
 		return
 	}
 
+	log.Printf("[SIGNAL] Sending offer to %s (SDP length=%d)", peerID, len(offer.SDP))
+
 	payload, _ := json.Marshal(protocol.SDPPayload{
 		Type: "offer",
 		SDP:  offer.SDP,
 	})
 
-	m.signaler.Send(protocol.SignalingMessage{
+	if err := m.signaler.Send(protocol.SignalingMessage{
 		Type:    protocol.MsgOffer,
 		PeerID:  peerID,
 		Payload: payload,
-	})
+	}); err != nil {
+		log.Printf("[SIGNAL] ERROR sending offer to %s: %v", peerID, err)
+	}
 }
 
 func (m *MeshManager) handleOffer(msg protocol.SignalingMessage) {
@@ -333,8 +376,11 @@ func (m *MeshManager) handleOffer(msg protocol.SignalingMessage) {
 
 	var offerPayload protocol.SDPPayload
 	if err := json.Unmarshal(msg.Payload, &offerPayload); err != nil {
+		log.Printf("[SIGNAL] ERROR unmarshalling offer from %s: %v", peerID, err)
 		return
 	}
+
+	log.Printf("[SIGNAL] Setting remote offer from %s (SDP length=%d)", peerID, len(offerPayload.SDP))
 
 	offer := webrtc.SessionDescription{
 		Type: webrtc.SDPTypeOffer,
@@ -357,16 +403,20 @@ func (m *MeshManager) handleOffer(msg protocol.SignalingMessage) {
 		return
 	}
 
+	log.Printf("[SIGNAL] Sending answer to %s (SDP length=%d)", peerID, len(answer.SDP))
+
 	payload, _ := json.Marshal(protocol.SDPPayload{
 		Type: "answer",
 		SDP:  answer.SDP,
 	})
 
-	m.signaler.Send(protocol.SignalingMessage{
+	if err := m.signaler.Send(protocol.SignalingMessage{
 		Type:    protocol.MsgAnswer,
 		PeerID:  peerID,
 		Payload: payload,
-	})
+	}); err != nil {
+		log.Printf("[SIGNAL] ERROR sending answer to %s: %v", peerID, err)
+	}
 }
 
 func (m *MeshManager) handleAnswer(msg protocol.SignalingMessage) {
@@ -375,13 +425,17 @@ func (m *MeshManager) handleAnswer(msg protocol.SignalingMessage) {
 	m.mu.RUnlock()
 
 	if !ok {
+		log.Printf("[SIGNAL] Received answer from unknown peer %s", msg.PeerID)
 		return
 	}
 
 	var answerPayload protocol.SDPPayload
 	if err := json.Unmarshal(msg.Payload, &answerPayload); err != nil {
+		log.Printf("[SIGNAL] ERROR unmarshalling answer from %s: %v", msg.PeerID, err)
 		return
 	}
+
+	log.Printf("[SIGNAL] Setting remote answer from %s (SDP length=%d)", msg.PeerID, len(answerPayload.SDP))
 
 	answer := webrtc.SessionDescription{
 		Type: webrtc.SDPTypeAnswer,
@@ -390,6 +444,8 @@ func (m *MeshManager) handleAnswer(msg protocol.SignalingMessage) {
 
 	if err := peer.PC.SetRemoteDescription(answer); err != nil {
 		log.Printf("Failed to set remote desc: %v", err)
+	} else {
+		log.Printf("[SIGNAL] Successfully set remote answer from %s", msg.PeerID)
 	}
 }
 
@@ -399,13 +455,17 @@ func (m *MeshManager) handleICECandidate(msg protocol.SignalingMessage) {
 	m.mu.RUnlock()
 
 	if !ok {
+		log.Printf("[ICE] Received candidate from unknown peer %s, ignoring", msg.PeerID)
 		return
 	}
 
 	var candPayload protocol.ICECandidatePayload
 	if err := json.Unmarshal(msg.Payload, &candPayload); err != nil {
+		log.Printf("[ICE] ERROR unmarshalling candidate from %s: %v", msg.PeerID, err)
 		return
 	}
+
+	log.Printf("[ICE] Adding remote candidate from %s: %s", msg.PeerID, candPayload.Candidate)
 
 	cand := webrtc.ICECandidateInit{
 		Candidate:        candPayload.Candidate,
@@ -415,7 +475,9 @@ func (m *MeshManager) handleICECandidate(msg protocol.SignalingMessage) {
 	}
 
 	if err := peer.PC.AddICECandidate(cand); err != nil {
-		log.Printf("Failed to add ICE candidate: %v", err)
+		log.Printf("[ICE] ERROR adding candidate from %s: %v", msg.PeerID, err)
+	} else {
+		log.Printf("[ICE] Successfully added candidate from %s", msg.PeerID)
 	}
 }
 
