@@ -1,0 +1,18 @@
+/archive
+/docs
+/plans
+/.agents
+
+# Binaries
+*.exe
+*.exe~*
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+termcall
+diagtest
+
+# Logs
+*.log

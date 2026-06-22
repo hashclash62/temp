@@ -18,6 +18,10 @@ func (p *Player) WriteOpus(data []byte) error {
 	return nil
 }
 
+func (p *Player) LastRMS() float64 {
+	return 0.0
+}
+
 // Close is a no-op.
 func (p *Player) Close() {
 }

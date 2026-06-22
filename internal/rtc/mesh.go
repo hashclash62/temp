@@ -228,6 +228,11 @@ func (m *MeshManager) createPeerConnection(peerID string) (*webrtc.PeerConnectio
 				log.Printf("Failed to create audio player for %s: %v", peerID, err)
 				return
 			}
+			m.mu.Lock()
+			if p, ok := m.Peers[peerID]; ok {
+				p.Player = player
+			}
+			m.mu.Unlock()
 
 			go func() {
 				defer player.Close()

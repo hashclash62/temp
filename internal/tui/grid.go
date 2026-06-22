@@ -22,11 +22,16 @@ func computeGrid(peerCount, termW, termH int) (cols, boxW, boxH, innerW, innerH 
 	boxW = termW / cols
 	boxH = termH / rows
 
-	// Calculate max available inner dimensions
-	// Width overhead: 2 for borders, 2 for horizontal padding = 4
-	maxInnerW := boxW - 4
-	// Height overhead: 2 for borders, 1 for nameLabel, 1 for empty line, 1 safety = 5
-	maxInnerH := boxH - 5
+	// We want 1 unit of margin on all sides of a cell.
+	// We also don't use lipgloss Border anymore. The top bar takes 1 line.
+	// So overhead per cell:
+	// Margin: 2 horiz, 2 vert
+	// TopBar: 1 vert
+	marginH := 2
+	marginV := 2
+
+	maxInnerW := boxW - marginH
+	maxInnerH := boxH - marginV - 1 // 1 for the top bar
 
 	if maxInnerW < 10 {
 		maxInnerW = 10
@@ -48,5 +53,7 @@ func computeGrid(peerCount, termW, termH int) (cols, boxW, boxH, innerW, innerH 
 		targetW = targetH * 8 / 3
 	}
 
+	// targetW/targetH are the video dimensions.
+	// For margins, we'll return the original boxW/boxH, but the caller will render cells smaller.
 	return cols, boxW, boxH, targetW, targetH
 }

@@ -5,6 +5,7 @@ package playback
 
 import (
 	"fmt"
+	"math"
 	"sync"
 
 	"github.com/gen2brain/malgo"
@@ -24,6 +25,7 @@ type Player struct {
 	leftover []int16
 	mu       sync.Mutex
 	closed   bool
+	lastRMS  float64
 }
 
 // NewPlayer initializes an Opus decoder and an audio playback device.
@@ -85,12 +87,31 @@ func (p *Player) WriteOpus(data []byte) error {
 		return err
 	}
 
+	var sum float64
+	for i := 0; i < n; i++ {
+		s := float64(pcm[i])
+		sum += s * s
+	}
+	rms := 0.0
+	if n > 0 {
+		rms = math.Sqrt(sum / float64(n))
+	}
+	p.mu.Lock()
+	p.lastRMS = rms / 32768.0 // Normalize to 0-1
+	p.mu.Unlock()
+
 	select {
 	case p.pcmChan <- pcm[:n]:
 	default:
 		// Drop packet if the buffer is full to prevent falling behind live audio
 	}
 	return nil
+}
+
+func (p *Player) LastRMS() float64 {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.lastRMS
 }
 
 // onAudioRequest is called by the OS audio thread to fill the playback buffer.

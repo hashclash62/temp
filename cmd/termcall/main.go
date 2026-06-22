@@ -79,7 +79,7 @@ func main() {
 			}()
 		}
 
-		callModel := tui.NewCallModel(mesh, cam, mic)
+		callModel := tui.NewCallModel(res.RoomID, mesh, cam, mic)
 
 		mesh.OnPeerJoin = func(peerID, username string) {
 			send(tui.PeerJoinMsg{PeerID: peerID, Username: username})

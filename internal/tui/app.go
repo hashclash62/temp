@@ -31,6 +31,10 @@ type LocalFrameMsg struct {
 	RawImage image.Image
 }
 
+type StatsTickMsg struct{}
+
+type VolumeTickMsg struct{}
+
 type AppModel struct {
 	currentScreen screen
 	joinModel     *JoinModel
@@ -86,7 +90,7 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.callModel.Update(msg)
 		}
 		return m, nil
-	case PeerFrameMsg, LocalFrameMsg, PeerJoinMsg, PeerLeaveMsg:
+	case PeerFrameMsg, LocalFrameMsg, PeerJoinMsg, PeerLeaveMsg, StatsTickMsg, VolumeTickMsg:
 		if m.currentScreen == screenCall && m.callModel != nil {
 			cm, cmd := m.callModel.Update(msg)
 			m.callModel = cm.(*CallModel)
